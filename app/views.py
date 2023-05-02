@@ -2,9 +2,12 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
+from rest_framework import views
+from rest_framework.generics import get_object_or_404
 
 
 from .models import Doctor, Patient
+from .my_generic import MyGenericRetriveUpdataDestroyView
 from .serializers import DoctorSerializer, PatientSerializer
 
 
@@ -25,6 +28,27 @@ def doctor_list_create_api_view(request):
             return Response(serializer.errors, status=400)
 
 
+class DoctorRetrieveUpdataDestroyView(views.APIView):
+
+    def get_object(self, pk):
+        return get_object_or_404(Doctor, pk=pk)
+
+    def get(self, request, pk, *args, **kwargs):
+        serializer = DoctorSerializer(instance=self.get_object(pk))
+        return Response(serializer.data)
+
+    def put(self, request, pk, *args, **kwargs):
+        serializer = DoctorSerializer(instance=self.get_object(pk), data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=404)
+
+    def delete(self, request, pk, *args, **kwargs):
+        self.get_object(pk).delete()
+        return Response(status=204)
+
 
 @api_view(http_method_names=['GET', 'POST'])
 def patient_list_create_api_view(request):
@@ -41,23 +65,6 @@ def patient_list_create_api_view(request):
             return Response(serializer.errors, status=400)
 
 
-@api_view(http_method_names=['GET', 'PUT', 'DELETE'])
-def patient_retrieve_updata_destroy_api_view(request, pk):
-
-    patient = get_object_or_404(Patient, pk=pk)
-
-    if request.method == 'GET':
-        serializer = PatientSerializer(instance=patient)
-        return Response(serializer.data)
-
-    if request.method == 'PUT':
-        serializer = PatientSerializer(instance=patient, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=400)
-
-    if request.method == 'DELETE':
-        patient.delete()
-        return Response(status=204)
+class PatientRetrieveUpdataDestroyView(MyGenericRetriveUpdataDestroyView):
+    queryset = Patient.objects.all()
+    serializer_class = PatientSerializer
