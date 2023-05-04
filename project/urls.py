@@ -15,9 +15,32 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.conf import settings
+from django.conf.urls.static import static
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Backend for online shop KG",
+      default_version='alpha-0.0.1',
+      description="This api for online shop",
+      terms_of_service="https://www.google.com/policies/terms/",
+      contact=openapi.Contact(email="mkali2065@gmail.com"),
+      license=openapi.License(name="No License"),
+   ),
+   public=True,
+   permission_classes=[permissions.AllowAny],
+)
+
+swagger_urlpatterns = [
+   path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
+
+]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('app.urls'))
-]
+    path('api/', include('app.urls')),
+] + swagger_urlpatterns + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
